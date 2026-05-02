@@ -1,0 +1,143 @@
+/**
+ * Medianoche Sync - Styles
+ * アクションバーとモーダルのスタイル
+ */
+
+/* ============================================================
+   Action Bar (Reading View - 本文下)
+   ============================================================ */
+
+.medianoche-action-bar {
+	display: flex;
+	gap: 8px;
+	padding: 16px 0;
+	margin-top: 24px;
+	border-top: 1px solid var(--background-modifier-border);
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+.medianoche-action-button {
+	padding: 10px 20px;
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	cursor: pointer;
+	font-size: 14px;
+	transition: all 0.15s ease;
+	/* タッチデバイス用に大きめのタップ領域 */
+	min-width: 100px;
+	min-height: 44px;
+}
+
+.medianoche-action-button:hover {
+	background: var(--background-modifier-hover);
+}
+
+.medianoche-action-button:active {
+	transform: scale(0.98);
+}
+
+/* Star 状態 */
+.medianoche-action-button.starred {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+/* Archive 状態 */
+.medianoche-action-button.archived {
+	background: var(--background-modifier-success);
+	color: var(--text-on-accent);
+	opacity: 0.8;
+}
+
+/* Delete ボタン (Base) */
+.medianoche-action-button.delete {
+	/* border-color: var(--text-error); <-- Removed as requested */
+	color: var(--text-error);
+}
+
+.medianoche-action-button.delete:hover {
+	background: var(--background-modifier-error-hover);
+}
+
+/* Delete 状態 (Active) */
+.medianoche-action-button.delete.deleted {
+	background: var(--text-error);
+	color: var(--text-on-accent);
+	border-color: var(--text-error);
+}
+
+/* ============================================================
+   Header Actions (Live Preview / Source)
+   ============================================================ */
+
+/* Star アイコン - アクティブ状態 */
+.medianoche-starred {
+	color: var(--text-warning) !important;
+}
+.medianoche-starred svg {
+	fill: var(--text-warning);
+	stroke: var(--text-warning);
+}
+
+/* Archive アイコン - アクティブ状態 */
+.medianoche-archived {
+	color: var(--text-success) !important;
+}
+.medianoche-archived svg {
+	fill: var(--text-success);
+	stroke: var(--text-success);
+}
+
+/* Delete アイコン - アクティブ状態 */
+.medianoche-deleted {
+	color: var(--text-error) !important;
+}
+.medianoche-deleted svg {
+	fill: var(--text-error);
+	stroke: var(--text-error);
+}
+
+/* ============================================================
+   Confirm Delete Modal
+   ============================================================ */
+
+.medianoche-modal-buttons {
+	display: flex;
+	gap: 12px;
+	justify-content: flex-end;
+	margin-top: 20px;
+}
+
+.medianoche-modal-buttons button {
+	padding: 8px 16px;
+	border-radius: 6px;
+	cursor: pointer;
+	min-width: 80px;
+}
+
+.medianoche-modal-buttons button.mod-warning {
+	background: var(--text-error);
+	color: var(--text-on-accent);
+	border: none;
+}
+
+/* ============================================================
+   Mobile Optimizations
+   ============================================================ */
+
+@media (max-width: 600px) {
+	.medianoche-action-bar {
+		flex-direction: column;
+		gap: 12px;
+	}
+
+	.medianoche-action-button {
+		width: 100%;
+		padding: 14px 20px;
+		font-size: 16px;
+	}
+}
