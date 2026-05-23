@@ -1,9 +1,9 @@
 {
 	"id": "medianoche-sync",
 	"name": "Medianoche Sync",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"minAppVersion": "1.0.0",
-	"description": "Use Medianoche RSS, web clipper, and read later articles in Obsidian with AI Summary, AI Comments, Star, Archive, and Delete.",
+	"description": "Use Medianoche RSS, web clipper, and read later articles with AI Summary, AI Comments, Star, Archive, and Delete.",
 	"author": "Takashi Ohida",
 	"authorUrl": "https://medianoche.app",
 	"isDesktopOnly": false

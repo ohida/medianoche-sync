@@ -21,4 +21,9 @@ data.json
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
 
-# AI agent settings are part of this repository.
+# Local AI agent settings
+.agent/
+.gemini/
+AGENTS.md
+GEMINI.md
+CLAUDE.md

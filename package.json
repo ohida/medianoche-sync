@@ -1,13 +1,12 @@
 {
 	"name": "medianoche-sync",
-	"version": "0.1.3",
-	"description": "Use Medianoche RSS, web clipper, and read later articles in Obsidian with AI Summary, AI Comments, Star, Archive, and Delete.",
+	"version": "0.1.4",
+	"description": "Use Medianoche RSS, web clipper, and read later articles with AI Summary, AI Comments, Star, Archive, and Delete.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"agent:validate": "node .agent/scripts/validate-agent-config.mjs",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [
