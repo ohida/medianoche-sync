@@ -1,6 +1,6 @@
 {
 	"name": "medianoche-sync",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Obsidian plugin for Medianoche article triage (Star/Archive/Delete)",
 	"main": "main.js",
 	"type": "module",
