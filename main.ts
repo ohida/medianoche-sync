@@ -18,7 +18,7 @@
  *   - `medianoche_archived`
  *   - `medianoche_deleted`
  *   - `medianoche_score`
- *   - `medianoche_cluster`
+ *   - `medianoche_cluster_label`
  * - Exception: `og_image` is used instead of `medianoche_og_image` for broader compatibility.
  *
  * UI:
@@ -35,11 +35,12 @@ import {
 	Plugin,
 	Notice,
 	TFile,
-	TFolder,
 	MarkdownView,
 	MarkdownPostProcessorContext,
 	Modal,
 	App,
+	PluginSettingTab,
+	Setting,
 } from 'obsidian';
 
 // ============================================================
@@ -59,6 +60,25 @@ interface MedianocheMetadata {
 	deleted: boolean;
 }
 
+interface MedianocheSyncSettings {
+	confirmBeforeDelete: boolean;
+	showReadingActionBar: boolean;
+	showEditorHeaderActions: boolean;
+}
+
+type MedianocheBooleanKey =
+	| 'medianoche_starred'
+	| 'medianoche_archived'
+	| 'medianoche_deleted';
+
+const DEFAULT_SETTINGS: MedianocheSyncSettings = {
+	confirmBeforeDelete: true,
+	showReadingActionBar: true,
+	showEditorHeaderActions: true,
+};
+
+const HIDE_READING_ACTION_BAR_CLASS = 'medianoche-hide-reading-action-bar';
+
 // ============================================================
 // Main Plugin Class
 // ============================================================
@@ -66,9 +86,14 @@ interface MedianocheMetadata {
 export default class MedianocheSyncPlugin extends Plugin {
 	// ヘッダーアクション用のアイコン要素（削除時に使用）
 	private headerActions: HTMLElement[] = [];
+	private headerUpdateSeq = 0;
+	settings: MedianocheSyncSettings = DEFAULT_SETTINGS;
 
 	async onload() {
-		console.log('Loading Medianoche Sync plugin');
+		await this.loadSettings();
+
+		this.addSettingTab(new MedianocheSyncSettingTab(this.app, this));
+		this.applyVisibilitySettings();
 
 		// コマンド登録
 		this.registerCommands();
@@ -105,8 +130,32 @@ export default class MedianocheSyncPlugin extends Plugin {
 	}
 
 	onunload() {
-		console.log('Unloading Medianoche Sync plugin');
 		this.clearHeaderActions();
+		document.body.classList.remove(HIDE_READING_ACTION_BAR_CLASS);
+	}
+
+	async loadSettings() {
+		this.settings = {
+			...DEFAULT_SETTINGS,
+			...(await this.loadData()),
+		};
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
+
+	applyVisibilitySettings() {
+		document.body.classList.toggle(
+			HIDE_READING_ACTION_BAR_CLASS,
+			!this.settings.showReadingActionBar
+		);
+
+		if (this.settings.showEditorHeaderActions) {
+			this.updateHeaderActions(this.app.workspace.getActiveFile());
+		} else {
+			this.clearHeaderActions();
+		}
 	}
 
 	// ============================================================
@@ -136,6 +185,12 @@ export default class MedianocheSyncPlugin extends Plugin {
 			name: 'Toggle Delete',
 			callback: () => this.deleteCurrentFile(),
 			hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'd' }],
+		});
+
+		this.addCommand({
+			id: 'open-settings',
+			name: 'Open settings',
+			callback: () => this.openSettings(),
 		});
 	}
 
@@ -176,39 +231,54 @@ export default class MedianocheSyncPlugin extends Plugin {
 
 	async toggleStar(file: TFile): Promise<boolean | null> {
 		if (!this.isMedianocheFile(file)) {
-			new Notice('Not a Medianoche file');
+			new Notice('Not a Medianoche note');
 			return null;
 		}
 
-		const meta = await this.getMedianocheMetadata(file);
-		const newValue = !meta.starred;
-		await this.updateFrontmatter(file, 'medianoche_starred', newValue);
-		new Notice(newValue ? '⭐ Starred!' : '☆ Unstarred');
+		const newValue = await this.toggleBooleanFrontmatter(
+			file,
+			'medianoche_starred'
+		);
+		if (newValue === null) {
+			new Notice('Not a Medianoche note');
+			return null;
+		}
+		new Notice(newValue ? 'Starred' : 'Unstarred');
 		return newValue;
 	}
+
 	async toggleArchive(file: TFile): Promise<boolean | null> {
 		if (!this.isMedianocheFile(file)) {
-			new Notice('Not a Medianoche file');
+			new Notice('Not a Medianoche note');
 			return null;
 		}
 
-		const meta = await this.getMedianocheMetadata(file);
-		const newValue = !meta.archived;
-		await this.updateFrontmatter(file, 'medianoche_archived', newValue);
-		new Notice(newValue ? '📦 Archived' : '📦 Unarchived');
+		const newValue = await this.toggleBooleanFrontmatter(
+			file,
+			'medianoche_archived'
+		);
+		if (newValue === null) {
+			new Notice('Not a Medianoche note');
+			return null;
+		}
+		new Notice(
+			newValue
+				? 'Archived in Medianoche'
+				: 'Restored to Inbox in Medianoche'
+		);
 		return newValue;
 	}
 
 	async toggleDelete(file: TFile): Promise<boolean | null> {
 		if (!this.isMedianocheFile(file)) {
-			new Notice('Not a Medianoche file');
+			new Notice('Not a Medianoche note');
 			return null;
 		}
 
-		const meta = await this.getMedianocheMetadata(file);
+		const meta = this.getMedianocheMetadata(file);
 		const newValue = !meta.deleted;
 
-		if (newValue) {
+		if (newValue && this.settings.confirmBeforeDelete) {
 			// 確認ダイアログ（モバイルでも動作）
 			const confirmed = await this.confirmDelete(file.basename);
 			if (!confirmed) {
@@ -216,9 +286,21 @@ export default class MedianocheSyncPlugin extends Plugin {
 			}
 		}
 
-		await this.updateFrontmatter(file, 'medianoche_deleted', newValue);
-		new Notice(newValue ? '🗑️ Marked for deletion' : '♻️ Restored');
-		return newValue;
+		const savedValue = await this.setBooleanFrontmatter(
+			file,
+			'medianoche_deleted',
+			newValue
+		);
+		if (savedValue === null) {
+			new Notice('Not a Medianoche note');
+			return null;
+		}
+		new Notice(
+			savedValue
+				? 'Marked for deletion in Medianoche'
+				: 'Deletion mark removed'
+		);
+		return savedValue;
 	}
 
 	// ============================================================
@@ -228,28 +310,55 @@ export default class MedianocheSyncPlugin extends Plugin {
 	isMedianocheFile(file: TFile): boolean {
 		const cache = this.app.metadataCache.getFileCache(file);
 		const frontmatter = cache?.frontmatter;
-		return frontmatter?.medianoche_id != null;
+		return parseMedianocheId(frontmatter?.medianoche_id) !== null;
 	}
 
-	async getMedianocheMetadata(file: TFile): Promise<MedianocheMetadata> {
+	getMedianocheMetadata(file: TFile): MedianocheMetadata {
 		const cache = this.app.metadataCache.getFileCache(file);
 		const fm = cache?.frontmatter ?? {};
 		return {
-			medianocheId: fm.medianoche_id ?? null,
-			starred: fm.medianoche_starred === true,
-			archived: fm.medianoche_archived === true,
-			deleted: fm.medianoche_deleted === true,
+			medianocheId: parseMedianocheId(fm.medianoche_id),
+			starred: parseMedianocheBoolean(fm.medianoche_starred),
+			archived: parseMedianocheBoolean(fm.medianoche_archived),
+			deleted: parseMedianocheBoolean(fm.medianoche_deleted),
 		};
 	}
 
-	async updateFrontmatter(
+	async toggleBooleanFrontmatter(
 		file: TFile,
-		key: string,
-		value: boolean
-	): Promise<void> {
+		key: MedianocheBooleanKey
+	): Promise<boolean | null> {
+		let nextValue: boolean | null = null;
+
 		await this.app.fileManager.processFrontMatter(file, (fm) => {
-			fm[key] = value;
+			if (parseMedianocheId(fm.medianoche_id) === null) {
+				return;
+			}
+
+			nextValue = !parseMedianocheBoolean(fm[key]);
+			fm[key] = nextValue;
 		});
+
+		return nextValue;
+	}
+
+	async setBooleanFrontmatter(
+		file: TFile,
+		key: MedianocheBooleanKey,
+		value: boolean
+	): Promise<boolean | null> {
+		let savedValue: boolean | null = null;
+
+		await this.app.fileManager.processFrontMatter(file, (fm) => {
+			if (parseMedianocheId(fm.medianoche_id) === null) {
+				return;
+			}
+
+			fm[key] = value;
+			savedValue = value;
+		});
+
+		return savedValue;
 	}
 
 	// ============================================================
@@ -273,7 +382,6 @@ export default class MedianocheSyncPlugin extends Plugin {
 		if (!(file instanceof TFile)) return;
 		if (!this.isMedianocheFile(file)) return;
 
-
 		// 最後のセクションにのみ追加（重複防止）
 		const info = ctx.getSectionInfo(el);
 		if (!info) return;
@@ -291,51 +399,66 @@ export default class MedianocheSyncPlugin extends Plugin {
 		this.createActionBarElement(el, file);
 	}
 
-	private async createActionBarElement(container: HTMLElement, file: TFile) {
-		const meta = await this.getMedianocheMetadata(file);
+	private createActionBarElement(container: HTMLElement, file: TFile) {
+		const meta = this.getMedianocheMetadata(file);
 
 		const actionBar = container.createDiv({ cls: 'medianoche-action-bar' });
 
 		// Star ボタン
 		const starBtn = actionBar.createEl('button', {
 			cls: `medianoche-action-button ${meta.starred ? 'starred' : ''}`,
-			text: meta.starred ? '⭐ Starred' : '☆ Star',
+			text: getStarButtonText(meta.starred),
 		});
 		starBtn.addEventListener('click', async () => {
-			const newState = await this.toggleStar(file);
-			if (newState === null) return;
-			// ボタン状態を更新 (メタデータ再取得ではなく、結果を使用)
-			starBtn.textContent = newState ? '⭐ Starred' : '☆ Star';
-			starBtn.toggleClass('starred', newState);
+			try {
+				const newState = await this.toggleStar(file);
+				if (newState === null) return;
+				// ボタン状態を更新 (メタデータ再取得ではなく、結果を使用)
+				starBtn.textContent = getStarButtonText(newState);
+				starBtn.toggleClass('starred', newState);
+			} catch (error) {
+				console.error('Medianoche Sync: failed to toggle star', error);
+				new Notice('Failed to update Medianoche frontmatter');
+			}
 		});
 
 		// Archive ボタン
 		const archiveBtn = actionBar.createEl('button', {
 			cls: `medianoche-action-button ${meta.archived ? 'archived' : ''}`,
-			text: meta.archived ? '📦 Archived' : '📦 Archive',
+			text: getArchiveButtonText(meta.archived),
 		});
 		archiveBtn.addEventListener('click', async () => {
-			const newState = await this.toggleArchive(file);
-			if (newState === null) return;
+			try {
+				const newState = await this.toggleArchive(file);
+				if (newState === null) return;
 
-			// Update button state
-			archiveBtn.textContent = newState ? '📦 Archived' : '📦 Archive';
-			archiveBtn.toggleClass('archived', newState);
+				// Update button state
+				archiveBtn.textContent = getArchiveButtonText(newState);
+				archiveBtn.toggleClass('archived', newState);
+			} catch (error) {
+				console.error('Medianoche Sync: failed to toggle archive', error);
+				new Notice('Failed to update Medianoche frontmatter');
+			}
 		});
 
 		// Delete ボタン
 		const deleteBtn = actionBar.createEl('button', {
 			cls: `medianoche-action-button delete ${meta.deleted ? 'deleted' : ''}`,
-			text: meta.deleted ? '🗑️ Deleted' : '🗑️ Delete',
+			text: getDeleteButtonText(meta.deleted),
 		});
 		deleteBtn.addEventListener('click', async () => {
-			const newState = await this.toggleDelete(file);
+			try {
+				const newState = await this.toggleDelete(file);
 
-			// キャンセル時(null)は更新しない
-			if (newState === null) return;
+				// キャンセル時(null)は更新しない
+				if (newState === null) return;
 
-			deleteBtn.textContent = newState ? '🗑️ Deleted' : '🗑️ Delete';
-			deleteBtn.toggleClass('deleted', newState);
+				deleteBtn.textContent = getDeleteButtonText(newState);
+				deleteBtn.toggleClass('deleted', newState);
+			} catch (error) {
+				console.error('Medianoche Sync: failed to toggle delete', error);
+				new Notice('Failed to update Medianoche frontmatter');
+			}
 		});
 	}
 
@@ -343,26 +466,52 @@ export default class MedianocheSyncPlugin extends Plugin {
 	// Live Preview / Source: Header Actions
 	// ============================================================
 
-	private async updateHeaderActions(file: TFile | null) {
+	updateHeaderActions(file: TFile | null) {
+		const updateSeq = ++this.headerUpdateSeq;
 		this.clearHeaderActions();
 
+		if (!this.settings.showEditorHeaderActions) return;
 		if (!file || !this.isMedianocheFile(file)) return;
 
 		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		if (!view) return;
+		if (!view || view.file?.path !== file.path) return;
 
 		// 状態を取得してアイコンを動的に設定
-		const meta = await this.getMedianocheMetadata(file);
+		const meta = this.getMedianocheMetadata(file);
+		if (updateSeq !== this.headerUpdateSeq) return;
+
+		const runHeaderAction = async (action: () => Promise<boolean | null>) => {
+			try {
+				const changed = await action();
+				if (
+					changed !== null &&
+					this.app.workspace.getActiveFile()?.path === file.path
+				) {
+					this.updateHeaderActions(file);
+				}
+			} catch (error) {
+				console.error('Medianoche Sync: failed to update header action', error);
+				new Notice('Failed to update Medianoche frontmatter');
+			}
+		};
 
 		// Delete アイコン
-		const deleteAction = view.addAction('trash', 'Delete', () => this.toggleDelete(file));
+		const deleteAction = view.addAction(
+			'trash',
+			meta.deleted ? 'Remove deletion mark' : 'Mark for deletion',
+			() => runHeaderAction(() => this.toggleDelete(file))
+		);
 		if (meta.deleted) {
 			deleteAction.addClass('medianoche-deleted');
 		}
 		this.headerActions.push(deleteAction);
 
 		// Archive アイコン
-		const archiveAction = view.addAction('archive', 'Archive', () => this.toggleArchive(file));
+		const archiveAction = view.addAction(
+			'archive',
+			meta.archived ? 'Restore to Inbox' : 'Archive in Medianoche',
+			() => runHeaderAction(() => this.toggleArchive(file))
+		);
 		if (meta.archived) {
 			archiveAction.addClass('medianoche-archived');
 		}
@@ -371,7 +520,7 @@ export default class MedianocheSyncPlugin extends Plugin {
 		// Star アイコン（状態に応じて CSS クラスで色を変更）
 		const starLabel = meta.starred ? 'Unstar' : 'Star';
 		const starAction = view.addAction('star', starLabel, () =>
-			this.toggleStar(file)
+			runHeaderAction(() => this.toggleStar(file))
 		);
 		if (meta.starred) {
 			starAction.addClass('medianoche-starred');
@@ -383,16 +532,90 @@ export default class MedianocheSyncPlugin extends Plugin {
 		this.headerActions.forEach((el) => el.remove());
 		this.headerActions = [];
 	}
+
+	openSettings() {
+		if (openPluginSettings(this.app, this.manifest.id)) return;
+		new Notice('Open Obsidian Settings > Community plugins > Medianoche Sync');
+	}
+}
+
+class MedianocheSyncSettingTab extends PluginSettingTab {
+	constructor(app: App, private plugin: MedianocheSyncPlugin) {
+		super(app, plugin);
+	}
+
+	display(): void {
+		const { containerEl } = this;
+		containerEl.empty();
+
+		containerEl.createEl('h2', { text: 'Medianoche Sync' });
+
+		new Setting(containerEl)
+			.setName('Confirm before deletion')
+			.setDesc('Ask before setting medianoche_deleted to true.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.confirmBeforeDelete)
+					.onChange(async (value) => {
+						this.plugin.settings.confirmBeforeDelete = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName('Show bottom action buttons in Reading view')
+			.setDesc('Show Star, Archive, and Delete below Medianoche notes.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showReadingActionBar)
+					.onChange(async (value) => {
+						this.plugin.settings.showReadingActionBar = value;
+						await this.plugin.saveSettings();
+						this.plugin.applyVisibilitySettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName('Show editor header actions')
+			.setDesc('Show Star, Archive, and Delete icons in the note header.')
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.showEditorHeaderActions)
+					.onChange(async (value) => {
+						this.plugin.settings.showEditorHeaderActions = value;
+						await this.plugin.saveSettings();
+						this.plugin.applyVisibilitySettings();
+					})
+			);
+	}
+}
+
+interface ObsidianSettingsApi {
+	open: () => void;
+	openTabById: (id: string) => void;
+}
+
+type AppWithSettings = App & {
+	setting?: ObsidianSettingsApi;
+};
+
+function openPluginSettings(app: App, pluginId: string): boolean {
+	const setting = (app as AppWithSettings).setting;
+	if (!setting) return false;
+
+	setting.open();
+	setting.openTabById(pluginId);
+	return true;
 }
 
 // ============================================================
 // Confirm Delete Modal
 // ============================================================
 
-
 class ConfirmDeleteModal extends Modal {
 	private filename: string;
 	private onConfirm: (confirmed: boolean) => void;
+	private resolved = false;
 
 	constructor(
 		app: App,
@@ -406,12 +629,12 @@ class ConfirmDeleteModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this;
-		contentEl.createEl('h2', { text: 'Delete Confirmation' });
+		contentEl.createEl('h2', { text: 'Mark for deletion?' });
 		contentEl.createEl('p', {
-			text: `Are you sure you want to delete "${this.filename}"?`,
+			text: `Medianoche will delete "${this.filename}" on the next reverse sync.`,
 		});
 		contentEl.createEl('p', {
-			text: 'This will mark the item for deletion in Medianoche.',
+			text: 'The source note will be removed after Medianoche accepts the deletion.',
 			cls: 'mod-warning',
 		});
 
@@ -422,23 +645,77 @@ class ConfirmDeleteModal extends Modal {
 		const cancelBtn = buttonContainer.createEl('button', {
 			text: 'Cancel',
 		});
-		cancelBtn.addEventListener('click', () => {
-			this.onConfirm(false);
-			this.close();
-		});
+		cancelBtn.addEventListener('click', () => this.finish(false));
 
 		const confirmBtn = buttonContainer.createEl('button', {
-			text: 'Delete',
+			text: 'Mark for deletion',
 			cls: 'mod-warning',
 		});
-		confirmBtn.addEventListener('click', () => {
-			this.onConfirm(true);
-			this.close();
-		});
+		confirmBtn.addEventListener('click', () => this.finish(true));
 	}
 
 	onClose() {
+		this.finish(false, false);
 		const { contentEl } = this;
 		contentEl.empty();
 	}
+
+	private finish(confirmed: boolean, shouldClose = true) {
+		if (this.resolved) return;
+		this.resolved = true;
+		this.onConfirm(confirmed);
+		if (shouldClose) {
+			this.close();
+		}
+	}
+}
+
+function parseMedianocheId(value: unknown): number | null {
+	if (typeof value === 'number' && Number.isSafeInteger(value)) {
+		return value;
+	}
+	if (typeof value === 'string') {
+		const trimmed = value.trim();
+		if (!/^-?\d+$/.test(trimmed)) return null;
+
+		const parsed = Number(trimmed);
+		return Number.isSafeInteger(parsed) ? parsed : null;
+	}
+	return null;
+}
+
+function parseMedianocheBoolean(value: unknown): boolean {
+	if (typeof value === 'boolean') {
+		return value;
+	}
+	if (typeof value === 'number') {
+		return value === 1;
+	}
+	if (typeof value === 'string') {
+		switch (value.trim().toLowerCase()) {
+			case 'true':
+			case 'yes':
+			case 'on':
+			case '1':
+				return true;
+			case 'false':
+			case 'no':
+			case 'off':
+			case '0':
+				return false;
+		}
+	}
+	return false;
+}
+
+function getStarButtonText(starred: boolean): string {
+	return starred ? 'Unstar' : 'Star';
+}
+
+function getArchiveButtonText(archived: boolean): string {
+	return archived ? 'Restore' : 'Archive';
+}
+
+function getDeleteButtonText(deleted: boolean): string {
+	return deleted ? 'Undo Delete' : 'Delete';
 }

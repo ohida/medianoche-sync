@@ -17,6 +17,10 @@
 	flex-wrap: wrap;
 }
 
+body.medianoche-hide-reading-action-bar .medianoche-action-bar {
+	display: none;
+}
+
 .medianoche-action-button {
 	padding: 10px 20px;
 	border-radius: 8px;
