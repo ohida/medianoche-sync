@@ -1,7 +1,7 @@
 {
 	"name": "medianoche-sync",
-	"version": "0.1.2",
-	"description": "Obsidian plugin for Medianoche article triage (Star/Archive/Delete)",
+	"version": "0.1.3",
+	"description": "Use Medianoche RSS, web clipper, and read later articles in Obsidian with AI Summary, AI Comments, Star, Archive, and Delete.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
@@ -10,7 +10,26 @@
 		"agent:validate": "node .agent/scripts/validate-agent-config.mjs",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": ["obsidian", "plugin", "medianoche", "read-later"],
+	"keywords": [
+		"obsidian",
+		"obsidian-plugin",
+		"medianoche",
+		"rss",
+		"rss-reader",
+		"web-clipper",
+		"obsidian-web-clipper",
+		"read-it-later",
+		"read-later",
+		"article-triage",
+		"ai-summary",
+		"ai-comments",
+		"ai-perspectives",
+		"ai-search",
+		"semantic-search",
+		"markdown",
+		"frontmatter",
+		"sync"
+	],
 	"author": "Takashi Ohida",
 	"license": "MIT",
 	"devDependencies": {

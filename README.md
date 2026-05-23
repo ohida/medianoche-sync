@@ -1,59 +1,63 @@
-# ⚓️ Medianoche Sync
+# Medianoche Sync
 
-[![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-purple.svg?style=for-the-badge&logo=obsidian)](https://obsidian.md)
-[![Medianoche](https://img.shields.io/badge/Medianoche-RSS-00E5FF.svg?style=for-the-badge&logo=rss)](https://medianoche.app)
-[![Release](https://img.shields.io/github/v/release/ohida/medianoche-sync?style=for-the-badge&color=violet)](https://github.com/ohida/medianoche-sync/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+Medianoche Sync is the official Obsidian companion plugin for
+[Medianoche](https://medianoche.app), a desktop RSS reader, web clipper, and
+read later app.
 
-> [!TIP]
-> **Medianoche Sync** is the official Obsidian plugin that seamlessly connects your offline Markdown files with [Medianoche](https://medianoche.app) — a next-generation, AI-powered RSS reader. Star, archive, or delete your articles directly in Obsidian, and watch the status sync instantly to your main reader vault! 🌌✨
+It adds article triage actions to Markdown files exported by Medianoche, so you
+can star, archive, or mark articles for deletion without leaving your Obsidian
+vault.
 
----
+## What You Can Do
 
-## 🌟 Key Features
+- Star important RSS and web articles for later review.
+- Triage web clipper-style article notes exported from Medianoche.
+- Archive articles after reading to keep your Medianoche Inbox focused.
+- Mark articles for deletion from Obsidian when you are done with them.
+- Use commands and hotkeys for fast keyboard-first triage.
+- Work in Reading view, Live Preview, Source mode, desktop, and mobile.
+- Keep Medianoche AI Summary and AI Comments close to the article in Obsidian
+  when those export options are enabled.
 
-### ⚡️ Triage Directly inside Obsidian
-No need to switch apps. Mark reading status on the go:
-* ⭐ **Star / Favorite**: Mark articles as starred to keep them in your curated highlights.
-* 📦 **Archive**: Archive articles to keep your Inbox clean and focused.
-* 🗑️ **Delete**: Instantly mark articles for deletion with a clean, responsive confirmation dialog.
+## Who This Is For
 
-### 🎨 Premium Adult Modern UI Integration
-Designed to blend seamlessly with your Obsidian theme:
-* 📖 **Reading View (Post-Processor)**: A beautifully styled Action Bar floats at the bottom of synced articles.
-* ⚡ **Live Preview & Source Mode**: Perfectly styled active header icon badges (Star, Archive, Delete).
-* 📱 **Mobile-First Responsive Design**: Optimized tap targets, full widths, and smooth micro-animations for iPad and iPhone.
+Use this plugin if you read articles in Medianoche and keep exported Markdown in
+Obsidian. It fits RSS reader, web clipper, Obsidian Web Clipper-style, read
+later, read-it-later, web article archive, and knowledge management workflows
+where Obsidian is your long-term reading vault.
 
-### ⌨️ Speedrunning Hotkeys
-For keyboard-only power users:
-* **Toggle Star**: `Cmd + Shift + S` (Mac) / `Ctrl + Shift + S` (Windows)
-* **Toggle Archive**: `Cmd + Shift + A` (Mac) / `Ctrl + Shift + A` (Windows)
-* **Toggle Delete**: `Cmd + Shift + D` (Mac) / `Ctrl + Shift + D` (Windows)
+This plugin does not fetch RSS feeds or create article notes by itself.
+Medianoche desktop owns feed subscriptions, article extraction, file export, and
+the sync watcher that imports frontmatter changes back into the app.
 
----
+## Medianoche Features in Your Vault
 
-## 🚀 How It Works
+Medianoche is an AI-powered RSS, web clipper, and read later reader. This plugin
+helps its Obsidian export feel native, especially for workflows around:
 
-```mermaid
-sequenceDiagram
-    participant Medianoche as 🌌 Medianoche (App)
-    participant Markdown as 📝 Obsidian MD File
-    participant Plugin as ⚓️ Medianoche Sync Plugin
-    participant Watcher as 👁️ File Watcher
+- RSS and Atom feeds
+- Web clipper and Obsidian Web Clipper-style article capture
+- Read later article libraries
+- AI Summary and AI summaries
+- AI Comments and AI Perspectives
+- AI Search and semantic search
+- AI Clusters, scores, tags, and rich frontmatter metadata
+- Local-first reading, BYOK AI, and offline-friendly knowledge management
 
-    Medianoche->>Markdown: Exports Article with YAML Frontmatter
-    Note over Markdown: Contains `medianoche_id` SSOT
-    Plugin->>Markdown: User Star / Archive / Delete Action
-    Note over Markdown: Frontmatter Status Mutates!
-    Watcher->>Markdown: Detects local file changes
-    Watcher->>Medianoche: Syncs state back to Database
-```
+AI Summary, AI Comments, AI Perspectives, scores, clusters, and tags are created
+or managed by Medianoche desktop, then synced into Markdown files when the
+corresponding Medianoche settings are enabled.
 
----
+## How It Works
 
-## 🧩 Frontmatter Strategy
-
-Only Markdown files featuring the `medianoche_id` namespace in their frontmatter are managed by the plugin. This prevents collisions with your personal notes:
+1. Medianoche exports an article as a Markdown file in your Obsidian vault.
+2. The exported file includes a `medianoche_id` field in YAML frontmatter.
+3. Medianoche Sync detects that field and shows article actions only for that
+   file.
+4. When you star, archive, or delete, the plugin updates Medianoche frontmatter
+   fields.
+5. Medianoche desktop watches those files and syncs the status back to your
+   reader database.
 
 ```yaml
 ---
@@ -64,50 +68,54 @@ medianoche_deleted: false
 ---
 ```
 
----
+Only notes with `medianoche_id` are managed. Your normal Obsidian notes are left
+alone.
 
-## 🔌 Installation
+## Commands and Hotkeys
 
-### 1. From Obsidian Community Plugins (Recommended)
-1. Open **Obsidian Settings** → **Community plugins**.
-2. Click **Browse** and search for `Medianoche Sync`.
-3. Click **Install**, then **Enable**.
-4. You are good to go! 🪐
+Medianoche Sync adds commands for the active Medianoche article:
 
-### 2. Manual Installation (For Developers / Testers)
-1. Head over to [GitHub Releases](https://github.com/ohida/medianoche-sync/releases) and download the latest asset package (containing `main.js`, `manifest.json`, and `styles.css`).
-2. Create a folder in your Obsidian vault at `.obsidian/plugins/medianoche-sync/`.
-3. Extract the downloaded files into that folder.
-4. Go to **Obsidian Settings** → **Community plugins** and enable **Medianoche Sync**.
+| Action | macOS | Windows / Linux |
+|--------|-------|-----------------|
+| Toggle star | `Cmd + Shift + S` | `Ctrl + Shift + S` |
+| Archive | `Cmd + Shift + A` | `Ctrl + Shift + A` |
+| Mark for deletion | `Cmd + Shift + D` | `Ctrl + Shift + D` |
 
----
+The same actions are also available as article controls in supported Obsidian
+views.
 
-## ⚙️ Requirements
+## Requirements
 
-* **Medianoche App** (Pro desktop application with Obsidian Sync active)
-* **Obsidian v1.0.0** or later
+- Medianoche desktop app with Obsidian Sync enabled
+- Obsidian 1.0.0 or newer
+- Markdown articles exported by Medianoche
 
----
+## Installation
 
-## 🛠️ Local Development
+### From Obsidian Community Plugins
 
-Feel like extending the plugin or making it even shinier? We welcome developers!
+1. Open **Settings** -> **Community plugins** in Obsidian.
+2. Choose **Browse**.
+3. Search for `Medianoche Sync`.
+4. Install and enable **Medianoche Sync**.
+
+### Manual Installation
+
+1. Download the latest release from
+   [GitHub Releases](https://github.com/ohida/medianoche-sync/releases).
+2. Create this folder in your vault:
+   `.obsidian/plugins/medianoche-sync/`
+3. Copy `main.js`, `manifest.json`, and `styles.css` into that folder.
+4. Enable **Medianoche Sync** from Obsidian's Community plugins settings.
+
+## Local Development
 
 ```bash
-# Clone the repository and install deps
 npm install
-
-# Run the live bundler (watch mode)
 npm run dev
-
-# Build the optimized production bundle
 npm run build
 ```
 
----
+## License
 
-## 📄 License
-
-This project is licensed under the [MIT License](file:///Users/ohida/Codes/medianoche-sync/LICENSE).
-
-**Let's build a beautiful, zen-like reading ecosystem together! 🌸✨**
+Medianoche Sync is released under the [MIT License](./LICENSE).

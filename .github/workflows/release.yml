@@ -6,10 +6,13 @@ on:
       - "*"
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    concurrency:
+      group: release-${{ github.ref_name }}
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
@@ -19,17 +22,40 @@ jobs:
           node-version: "20.x"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Validate release metadata
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          package_version="$(node -p "require('./package.json').version")"
+          manifest_version="$(node -p "require('./manifest.json').version")"
+          min_app_version="$(node -p "require('./versions.json')[process.env.GITHUB_REF_NAME] || ''")"
+
+          if [ "$tag" != "$package_version" ]; then
+            echo "Tag $tag does not match package.json version $package_version"
+            exit 1
+          fi
+
+          if [ "$tag" != "$manifest_version" ]; then
+            echo "Tag $tag does not match manifest.json version $manifest_version"
+            exit 1
+          fi
+
+          if [ -z "$min_app_version" ]; then
+            echo "versions.json is missing an entry for $tag"
+            exit 1
+          fi
 
       - name: Build plugin
         run: npm run build
 
-      - name: Create Release
+      - name: Publish GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
+          tag="${GITHUB_REF_NAME}"
           gh release create "$tag" \
+            --verify-tag \
             --title="$tag" \
-            --draft \
+            --notes="Published by GitHub Actions from tag $tag." \
             main.js manifest.json styles.css
