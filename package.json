@@ -1,7 +1,7 @@
 {
 	"name": "medianoche-sync",
-	"version": "0.1.4",
-	"description": "Use Medianoche RSS, web clipper, and read later articles with AI Summary, AI Comments, Star, Archive, and Delete.",
+	"version": "0.1.5",
+	"description": "Sync and triage article notes exported from Medianoche to your vault: RSS feeds, web clipper captures, read later articles, star, archive, delete, AI Summary, and AI Comments.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

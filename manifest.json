@@ -1,9 +1,9 @@
 {
 	"id": "medianoche-sync",
 	"name": "Medianoche Sync",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"minAppVersion": "1.0.0",
-	"description": "Use Medianoche RSS, web clipper, and read later articles with AI Summary, AI Comments, Star, Archive, and Delete.",
+	"description": "Sync and triage article notes exported from Medianoche to your vault: RSS feeds, web clipper captures, read later articles, star, archive, delete, AI Summary, and AI Comments.",
 	"author": "Takashi Ohida",
 	"authorUrl": "https://medianoche.app",
 	"isDesktopOnly": false

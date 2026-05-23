@@ -1,10 +1,9 @@
 /**
  * Medianoche Sync - Styles
- * アクションバーとモーダルのスタイル
  */
 
 /* ============================================================
-   Action Bar (Reading View - 本文下)
+   Action Bar (Reading View)
    ============================================================ */
 
 .medianoche-action-bar {
@@ -30,7 +29,6 @@ body.medianoche-hide-reading-action-bar .medianoche-action-bar {
 	cursor: pointer;
 	font-size: 14px;
 	transition: all 0.15s ease;
-	/* タッチデバイス用に大きめのタップ領域 */
 	min-width: 100px;
 	min-height: 44px;
 }
@@ -43,23 +41,27 @@ body.medianoche-hide-reading-action-bar .medianoche-action-bar {
 	transform: scale(0.98);
 }
 
-/* Star 状態 */
+.medianoche-action-button:disabled {
+	cursor: default;
+	opacity: 0.6;
+}
+
+/* Starred */
 .medianoche-action-button.starred {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border-color: var(--interactive-accent);
 }
 
-/* Archive 状態 */
+/* Archived */
 .medianoche-action-button.archived {
 	background: var(--background-modifier-success);
 	color: var(--text-on-accent);
 	opacity: 0.8;
 }
 
-/* Delete ボタン (Base) */
+/* Delete */
 .medianoche-action-button.delete {
-	/* border-color: var(--text-error); <-- Removed as requested */
 	color: var(--text-error);
 }
 
@@ -67,7 +69,7 @@ body.medianoche-hide-reading-action-bar .medianoche-action-bar {
 	background: var(--background-modifier-error-hover);
 }
 
-/* Delete 状態 (Active) */
+/* Deleted */
 .medianoche-action-button.delete.deleted {
 	background: var(--text-error);
 	color: var(--text-on-accent);
@@ -78,7 +80,7 @@ body.medianoche-hide-reading-action-bar .medianoche-action-bar {
    Header Actions (Live Preview / Source)
    ============================================================ */
 
-/* Star アイコン - アクティブ状態 */
+/* Starred */
 .view-action.medianoche-starred,
 .clickable-icon.medianoche-starred {
 	color: var(--text-warning);
@@ -89,7 +91,7 @@ body.medianoche-hide-reading-action-bar .medianoche-action-bar {
 	stroke: var(--text-warning);
 }
 
-/* Archive アイコン - アクティブ状態 */
+/* Archived */
 .view-action.medianoche-archived,
 .clickable-icon.medianoche-archived {
 	color: var(--text-success);
@@ -100,7 +102,7 @@ body.medianoche-hide-reading-action-bar .medianoche-action-bar {
 	stroke: var(--text-success);
 }
 
-/* Delete アイコン - アクティブ状態 */
+/* Deleted */
 .view-action.medianoche-deleted,
 .clickable-icon.medianoche-deleted {
 	color: var(--text-error);
