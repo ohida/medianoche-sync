@@ -1,41 +1,59 @@
-# Medianoche Sync
+# ⚓️ Medianoche Sync
 
-An Obsidian plugin for managing articles exported from [Medianoche](https://medianoche.app) — your AI-powered RSS reader.
+[![Obsidian Plugin](https://img.shields.io/badge/Obsidian-Plugin-purple.svg?style=for-the-badge&logo=obsidian)](https://obsidian.md)
+[![Medianoche](https://img.shields.io/badge/Medianoche-RSS-00E5FF.svg?style=for-the-badge&logo=rss)](https://medianoche.app)
+[![Release](https://img.shields.io/github/v/release/ohida/medianoche-sync?style=for-the-badge&color=violet)](https://github.com/ohida/medianoche-sync/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-Star, Archive, and Delete synced articles directly within Obsidian, with changes automatically synced back to Medianoche.
+> [!TIP]
+> **Medianoche Sync** is the official Obsidian plugin that seamlessly connects your offline Markdown files with [Medianoche](https://medianoche.app) — a next-generation, AI-powered RSS reader. Star, archive, or delete your articles directly in Obsidian, and watch the status sync instantly to your main reader vault! 🌌✨
 
-## Features
+---
 
-### Actions
+## 🌟 Key Features
 
-| Action | Description |
-|--------|-------------|
-| ⭐ **Star** | Toggle favorite status |
-| 📦 **Archive** | Archive and remove from Inbox |
-| 🗑️ **Delete** | Permanently delete (with confirmation) |
+### ⚡️ Triage Directly inside Obsidian
+No need to switch apps. Mark reading status on the go:
+* ⭐ **Star / Favorite**: Mark articles as starred to keep them in your curated highlights.
+* 📦 **Archive**: Archive articles to keep your Inbox clean and focused.
+* 🗑️ **Delete**: Instantly mark articles for deletion with a clean, responsive confirmation dialog.
 
-### UI Integration
+### 🎨 Premium Adult Modern UI Integration
+Designed to blend seamlessly with your Obsidian theme:
+* 📖 **Reading View (Post-Processor)**: A beautifully styled Action Bar floats at the bottom of synced articles.
+* ⚡ **Live Preview & Source Mode**: Perfectly styled active header icon badges (Star, Archive, Delete).
+* 📱 **Mobile-First Responsive Design**: Optimized tap targets, full widths, and smooth micro-animations for iPad and iPhone.
 
-- **Reading View**: Action bar appears below article content
-- **Live Preview / Source**: Icon buttons in the header
+### ⌨️ Speedrunning Hotkeys
+For keyboard-only power users:
+* **Toggle Star**: `Cmd + Shift + S` (Mac) / `Ctrl + Shift + S` (Windows)
+* **Toggle Archive**: `Cmd + Shift + A` (Mac) / `Ctrl + Shift + A` (Windows)
+* **Toggle Delete**: `Cmd + Shift + D` (Mac) / `Ctrl + Shift + D` (Windows)
 
-### Hotkeys
+---
 
-| Action | Shortcut |
-|--------|----------|
-| Toggle Star | `Cmd+Shift+S` (Mac) / `Ctrl+Shift+S` (Windows) |
-| Archive | `Cmd+Shift+A` (Mac) / `Ctrl+Shift+A` (Windows) |
-| Delete | `Cmd+Shift+D` (Mac) / `Ctrl+Shift+D` (Windows) |
+## 🚀 How It Works
 
-## How It Works
+```mermaid
+sequenceDiagram
+    participant Medianoche as 🌌 Medianoche (App)
+    participant Markdown as 📝 Obsidian MD File
+    participant Plugin as ⚓️ Medianoche Sync Plugin
+    participant Watcher as 👁️ File Watcher
 
-1. **Medianoche** exports articles as Markdown files to your Obsidian vault
-2. **This plugin** updates the YAML frontmatter when you perform actions
-3. **Medianoche's File Watcher** detects changes and syncs them to the database
+    Medianoche->>Markdown: Exports Article with YAML Frontmatter
+    Note over Markdown: Contains `medianoche_id` SSOT
+    Plugin->>Markdown: User Star / Archive / Delete Action
+    Note over Markdown: Frontmatter Status Mutates!
+    Watcher->>Markdown: Detects local file changes
+    Watcher->>Medianoche: Syncs state back to Database
+```
 
-## Target Files
+---
 
-Only Markdown files with `medianoche_id` in frontmatter are recognized:
+## 🧩 Frontmatter Strategy
+
+Only Markdown files featuring the `medianoche_id` namespace in their frontmatter are managed by the plugin. This prevents collisions with your personal notes:
 
 ```yaml
 ---
@@ -46,40 +64,50 @@ medianoche_deleted: false
 ---
 ```
 
-## Installation
+---
 
-### Via BRAT (Recommended for Beta)
+## 🔌 Installation
 
-1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) in Obsidian
-2. Open BRAT settings → "Add Beta Plugin"
-3. Enter: `ohida/medianoche-sync`
-4. Click "Add Plugin"
-5. Enable "Medianoche Sync" in Community Plugins
+### 1. From Obsidian Community Plugins (Recommended)
+1. Open **Obsidian Settings** → **Community plugins**.
+2. Click **Browse** and search for `Medianoche Sync`.
+3. Click **Install**, then **Enable**.
+4. You are good to go! 🪐
 
-### Manual Installation
+### 2. Manual Installation (For Developers / Testers)
+1. Head over to [GitHub Releases](https://github.com/ohida/medianoche-sync/releases) and download the latest asset package (containing `main.js`, `manifest.json`, and `styles.css`).
+2. Create a folder in your Obsidian vault at `.obsidian/plugins/medianoche-sync/`.
+3. Extract the downloaded files into that folder.
+4. Go to **Obsidian Settings** → **Community plugins** and enable **Medianoche Sync**.
 
-1. Download the latest release from [GitHub Releases](https://github.com/ohida/medianoche-sync/releases)
-2. Extract `main.js`, `manifest.json`, and `styles.css` to your vault's `.obsidian/plugins/medianoche-sync/` folder
-3. Enable "Medianoche Sync" in Community Plugins settings
+---
 
-## Requirements
+## ⚙️ Requirements
 
-- [Medianoche](https://medianoche.app) desktop app with Obsidian Sync enabled
-- Obsidian v1.0.0 or later
+* **Medianoche App** (Pro desktop application with Obsidian Sync active)
+* **Obsidian v1.0.0** or later
 
-## Development
+---
+
+## 🛠️ Local Development
+
+Feel like extending the plugin or making it even shinier? We welcome developers!
 
 ```bash
-# Install dependencies
+# Clone the repository and install deps
 npm install
 
-# Build for production
-npm run build
-
-# Watch mode for development
+# Run the live bundler (watch mode)
 npm run dev
+
+# Build the optimized production bundle
+npm run build
 ```
 
-## License
+---
 
-MIT
+## 📄 License
+
+This project is licensed under the [MIT License](file:///Users/ohida/Codes/medianoche-sync/LICENSE).
+
+**Let's build a beautiful, zen-like reading ecosystem together! 🌸✨**

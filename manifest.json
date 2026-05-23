@@ -1,9 +1,9 @@
 {
 	"id": "medianoche-sync",
 	"name": "Medianoche Sync",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"minAppVersion": "1.0.0",
-	"description": "Star, Archive, and Delete actions for Medianoche-synced articles",
+	"description": "Star, Archive, and Delete actions for Medianoche-synced articles.",
 	"author": "Takashi Ohida",
 	"authorUrl": "https://medianoche.app",
 	"isDesktopOnly": false

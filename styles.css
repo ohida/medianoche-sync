@@ -75,28 +75,34 @@
    ============================================================ */
 
 /* Star アイコン - アクティブ状態 */
-.medianoche-starred {
-	color: var(--text-warning) !important;
+.view-action.medianoche-starred,
+.clickable-icon.medianoche-starred {
+	color: var(--text-warning);
 }
-.medianoche-starred svg {
+.view-action.medianoche-starred svg,
+.clickable-icon.medianoche-starred svg {
 	fill: var(--text-warning);
 	stroke: var(--text-warning);
 }
 
 /* Archive アイコン - アクティブ状態 */
-.medianoche-archived {
-	color: var(--text-success) !important;
+.view-action.medianoche-archived,
+.clickable-icon.medianoche-archived {
+	color: var(--text-success);
 }
-.medianoche-archived svg {
+.view-action.medianoche-archived svg,
+.clickable-icon.medianoche-archived svg {
 	fill: var(--text-success);
 	stroke: var(--text-success);
 }
 
 /* Delete アイコン - アクティブ状態 */
-.medianoche-deleted {
-	color: var(--text-error) !important;
+.view-action.medianoche-deleted,
+.clickable-icon.medianoche-deleted {
+	color: var(--text-error);
 }
-.medianoche-deleted svg {
+.view-action.medianoche-deleted svg,
+.clickable-icon.medianoche-deleted svg {
 	fill: var(--text-error);
 	stroke: var(--text-error);
 }
