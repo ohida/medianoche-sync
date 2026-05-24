@@ -15,6 +15,13 @@ import {
 	Setting,
 } from 'obsidian';
 import type { Hotkey } from 'obsidian';
+import {
+	parseMedianocheId,
+	parseMedianocheBoolean,
+	getStarButtonText,
+	getArchiveButtonText,
+	getDeleteButtonText,
+} from './utils';
 
 // ============================================================
 // Types
@@ -110,6 +117,11 @@ export default class MedianocheSyncPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	async onExternalSettingsChange() {
+		await this.loadSettings();
+		this.applyVisibilitySettings();
+	}
+
 	applyVisibilitySettings() {
 		document.body.classList.toggle(
 			HIDE_READING_ACTION_BAR_CLASS,
@@ -195,91 +207,78 @@ export default class MedianocheSyncPlugin extends Plugin {
 	// ============================================================
 
 	async toggleStar(file: TFile): Promise<boolean | null> {
-		return this.runExclusiveFileAction(
-			file,
-			async () => {
-				if (!this.isMedianocheFile(file)) {
-					new Notice('Not a Medianoche note');
-					return null;
-				}
-
-				const newValue = await this.toggleBooleanFrontmatter(
-					file,
-					'medianoche_starred'
-				);
-				if (newValue === null) {
-					new Notice('Not a Medianoche note');
-					return null;
-				}
-				new Notice(newValue ? 'Starred' : 'Unstarred');
-				return newValue;
+		return this.runExclusiveFileAction(file, async () => {
+			if (!this.isMedianocheFile(file)) {
+				new Notice('Not a Medianoche note');
+				return null;
 			}
-		);
+
+			const newValue = await this.toggleBooleanFrontmatter(
+				file,
+				'medianoche_starred'
+			);
+			if (newValue === null) {
+				new Notice('Not a Medianoche note');
+				return null;
+			}
+			new Notice(newValue ? 'Starred' : 'Unstarred');
+			return newValue;
+		});
 	}
 
 	async toggleArchive(file: TFile): Promise<boolean | null> {
-		return this.runExclusiveFileAction(
-			file,
-			async () => {
-				if (!this.isMedianocheFile(file)) {
-					new Notice('Not a Medianoche note');
-					return null;
-				}
-
-				const newValue = await this.toggleBooleanFrontmatter(
-					file,
-					'medianoche_archived'
-				);
-				if (newValue === null) {
-					new Notice('Not a Medianoche note');
-					return null;
-				}
-				new Notice(
-					newValue
-						? 'Archived in Medianoche'
-						: 'Restored to Inbox in Medianoche'
-				);
-				return newValue;
+		return this.runExclusiveFileAction(file, async () => {
+			if (!this.isMedianocheFile(file)) {
+				new Notice('Not a Medianoche note');
+				return null;
 			}
-		);
+
+			const newValue = await this.toggleBooleanFrontmatter(
+				file,
+				'medianoche_archived'
+			);
+			if (newValue === null) {
+				new Notice('Not a Medianoche note');
+				return null;
+			}
+			new Notice(
+				newValue ? 'Archived in Medianoche' : 'Restored to Inbox in Medianoche'
+			);
+			return newValue;
+		});
 	}
 
 	async toggleDelete(file: TFile): Promise<boolean | null> {
-		return this.runExclusiveFileAction(
-			file,
-			async () => {
-				if (!this.isMedianocheFile(file)) {
-					new Notice('Not a Medianoche note');
-					return null;
-				}
-
-				const meta = this.getMedianocheMetadata(file);
-				const newValue = !meta.deleted;
-
-				if (newValue && this.settings.confirmBeforeDelete) {
-					const confirmed = await this.confirmDelete(file.basename);
-					if (!confirmed) {
-						return null; // Cancelled
-					}
-				}
-
-				const savedValue = await this.setBooleanFrontmatter(
-					file,
-					'medianoche_deleted',
-					newValue
-				);
-				if (savedValue === null) {
-					new Notice('Not a Medianoche note');
-					return null;
-				}
-				new Notice(
-					savedValue
-						? 'Marked for deletion in Medianoche'
-						: 'Deletion mark removed'
-				);
-				return savedValue;
+		return this.runExclusiveFileAction(file, async () => {
+			if (!this.isMedianocheFile(file)) {
+				new Notice('Not a Medianoche note');
+				return null;
 			}
-		);
+
+			const meta = this.getMedianocheMetadata(file);
+			const newValue = !meta.deleted;
+
+			if (newValue && this.settings.confirmBeforeDelete) {
+				const confirmed = await this.confirmDelete(file.basename);
+				if (!confirmed) {
+					return null; // Cancelled
+				}
+			}
+
+			const savedValue = await this.setBooleanFrontmatter(
+				file,
+				'medianoche_deleted',
+				newValue
+			);
+			if (savedValue === null) {
+				new Notice('Not a Medianoche note');
+				return null;
+			}
+			new Notice(
+				savedValue ? 'Marked for deletion in Medianoche' : 'Deletion mark removed'
+			);
+			return savedValue;
+		});
 	}
 
 	private async runExclusiveFileAction(
@@ -541,7 +540,10 @@ export default class MedianocheSyncPlugin extends Plugin {
 }
 
 class MedianocheSyncSettingTab extends PluginSettingTab {
-	constructor(app: App, private plugin: MedianocheSyncPlugin) {
+	constructor(
+		app: App,
+		private plugin: MedianocheSyncPlugin
+	) {
 		super(app, plugin);
 	}
 
@@ -618,11 +620,7 @@ class ConfirmDeleteModal extends Modal {
 	private onConfirm: (confirmed: boolean) => void;
 	private resolved = false;
 
-	constructor(
-		app: App,
-		filename: string,
-		onConfirm: (confirmed: boolean) => void
-	) {
+	constructor(app: App, filename: string, onConfirm: (confirmed: boolean) => void) {
 		super(app);
 		this.filename = filename;
 		this.onConfirm = onConfirm;
@@ -669,54 +667,4 @@ class ConfirmDeleteModal extends Modal {
 			this.close();
 		}
 	}
-}
-
-function parseMedianocheId(value: unknown): number | null {
-	if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
-		return value;
-	}
-	if (typeof value === 'string') {
-		const trimmed = value.trim();
-		if (!/^\d+$/.test(trimmed)) return null;
-
-		const parsed = Number(trimmed);
-		return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
-	}
-	return null;
-}
-
-function parseMedianocheBoolean(value: unknown): boolean {
-	if (typeof value === 'boolean') {
-		return value;
-	}
-	if (typeof value === 'number') {
-		return value === 1;
-	}
-	if (typeof value === 'string') {
-		switch (value.trim().toLowerCase()) {
-			case 'true':
-			case 'yes':
-			case 'on':
-			case '1':
-				return true;
-			case 'false':
-			case 'no':
-			case 'off':
-			case '0':
-				return false;
-		}
-	}
-	return false;
-}
-
-function getStarButtonText(starred: boolean): string {
-	return starred ? 'Unstar' : 'Star';
-}
-
-function getArchiveButtonText(archived: boolean): string {
-	return archived ? 'Restore' : 'Archive';
-}
-
-function getDeleteButtonText(deleted: boolean): string {
-	return deleted ? 'Undo Delete' : 'Delete';
 }

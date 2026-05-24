@@ -1,7 +1,7 @@
 {
 	"id": "medianoche-sync",
 	"name": "Medianoche Sync",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"minAppVersion": "1.0.0",
 	"description": "Sync and triage article notes exported from Medianoche to your vault: RSS feeds, web clipper captures, read later articles, star, archive, delete, AI Summary, and AI Comments.",
 	"author": "Takashi Ohida",
